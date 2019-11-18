@@ -371,7 +371,7 @@ class TransactionManager():
 
 
     def total_undo(self):
-        pdb.set_trace()
+        # pdb.set_trace()
         for trans_id in self.tct.data.keys():
             status, last_lsn, tc_undo_nxt_lsn = self.tct.data[trans_id]
             
@@ -415,9 +415,9 @@ class TransactionManager():
             self.tct.data[trans_id][1] = prelsn
             # write data
             bufm.write_segment(prelsn, seg_offset, data)
-            bufm.dump()
             if crash and random.random() < 0.7:
-                print("crash!!!")
+                bufm.dump()
+                print("Now finish writing %d, data %s, crash!!!"%(seg_offset, data))
                 exit()
         # write end entry when transaction finished
         log_entry = LogEntry(LogEntry.END_TC, trans_id, prelsn=prelsn)
@@ -441,7 +441,13 @@ def system_init():
     logm.init()
     bufm.init()
 
-def test_tc():
+def test_tc_accomplish():
+    segment_list = (0x10, 0x20, 0x30, 0x40, 0x50)
+    data_list = ("init", "do something1", "do something2", "do something3", "end")
+    tcm.doUpdateTranscation(segment_list, data_list, False)
+    print("Now transaction finished, crash!!!")
+
+def test_tc_abort():
     segment_list = (0x10, 0x20, 0x30, 0x40, 0x50)
     data_list = ("init", "do something1", "do something2", "do something3", "end")
     tcm.doUpdateTranscation(segment_list, data_list, True)
@@ -466,11 +472,13 @@ def main():
 
 def test_main():
     c = sys.argv[1]
-    if c == '-1':
+    if c == '-init':
         system_init()
-    elif c == '-2':
-        test_tc()
-    elif c == '-3':
+    elif c == '-accomplish':
+        test_tc_accomplish()
+    elif c == '-abort':
+        test_tc_abort()
+    elif c == '-rec':
         tcm.restart_recovery()
 if __name__ == "__main__":
     test_main()
